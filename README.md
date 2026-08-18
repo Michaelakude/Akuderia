@@ -20,7 +20,7 @@ The Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat`
 
 ## Akuderia
 
-Akuderia is a 2D sandbox action RPG set in a vast, dangerous fantasy world.
+Akuderia is a 3/4 topdown sandbox action RPG set in a vast, dangerous fantasy world.
 
 Players begin with almost nothing and are free to explore, gather resources, craft equipment, build structures, discover secrets, fight enemies and challenge increasingly powerful bosses.
 
