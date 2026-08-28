@@ -3,7 +3,8 @@ package io.github.akuderia.headless;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.backends.headless.HeadlessApplication;
 import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
-import io.github.akuderia.Main;
+// import io.github.akuderia.Main;
+import io.github.akuderia.Gamescreens.GdxGame;
 
 /** Launches the headless application. Can be converted into a utilities project or a server application. */
 public class HeadlessLauncher {
@@ -13,7 +14,7 @@ public class HeadlessLauncher {
 
     private static Application createApplication() {
         // Note: you can use a custom ApplicationListener implementation for the headless project instead of Main.
-        return new HeadlessApplication(new Main(), getDefaultConfiguration());
+        return new HeadlessApplication(new GdxGame(), getDefaultConfiguration());
     }
 
     private static HeadlessApplicationConfiguration getDefaultConfiguration() {
