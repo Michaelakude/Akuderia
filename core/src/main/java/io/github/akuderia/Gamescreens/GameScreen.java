@@ -22,7 +22,8 @@ public class GameScreen extends ScreenAdapter {
     private final Viewport gameViewport = new ExtendViewport(16f, 9f);
     private final Texture playerWalkTexture = new Texture( Gdx.files.internal( "characters/Player/walk/Sprite/walk.png"));
     private final Texture playerIdleTexture = new Texture( Gdx.files.internal( "characters/Player/idle/Sprite/idle.png"));
-    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerIdleTexture, playerWalkTexture );
+    private final Texture playerRunTexture = new Texture( Gdx.files.internal( "characters/Player/run/Sprite/run.png"));
+    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
 
     public GameScreen(GdxGame game) {

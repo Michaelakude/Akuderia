@@ -17,7 +17,8 @@ public class Player extends GameObject {
     private static final float SCALE = 1 / 32f;
     private final Viewport gameViewport;
     private final Vector2 moveDirection = new Vector2();
-    private static float SPEED = 3f;
+    private static float SPEED = 2f;
+    private static float SprintSpeed = SPEED * 1.8f;
     private Vector2 inputMovement = new Vector2();
     private final PlayerAnimationController animationController;
     private String lastDirection = "s";
@@ -28,19 +29,23 @@ public class Player extends GameObject {
     // Offset from rect's position to where the full frame should be drawn
     private static final float DRAW_OFFSET_X = -PAD_LEFT;
     private static final float DRAW_OFFSET_Y = -PAD_BOTTOM;
+    private boolean Sprint = false;
 
-    public Player(float x, float y, Viewport gameViewport, Texture idleSheet, Texture walkSheet) {
+    public Player(float x, float y, Viewport gameViewport, Texture idleSheet, Texture walkSheet, Texture runSheet) {
         super(x, y, 12 * SCALE, 27 * SCALE, idleSheet);
         this.gameViewport = gameViewport;
         animationController = new PlayerAnimationController(0.1f);
         Animation<TextureRegion>[] idleAnimations = animationController.makeDirectionalAnimations( idleSheet, 64, 64 );
         Animation<TextureRegion>[] walkAnimations = animationController.makeDirectionalAnimations( walkSheet, 64, 64 );
+        Animation<TextureRegion>[] runAnimations = animationController.makeDirectionalAnimations( runSheet, 64, 64 );
 
         String[] idleStates = { "idle_nw", "idle_w", "idle_sw", "idle_s", "idle_se", "idle_e", "idle_ne", "idle_n" };
         String[] walkStates = { "walk_nw", "walk_w", "walk_sw", "walk_s", "walk_se", "walk_e", "walk_ne", "walk_n" };
+        String[] runStates = { "run_nw", "run_w", "run_sw", "run_s", "run_se", "run_e", "run_ne", "run_n" };
 
         animationController.loadAnimations(idleStates, idleAnimations);
         animationController.loadAnimations(walkStates, walkAnimations);
+        animationController.loadAnimations(runStates, runAnimations);
         animationController.changeState("idle_s", true );
     }
 
@@ -70,6 +75,10 @@ public class Player extends GameObject {
         float newX = rect.getX() + moveDirection.x * SPEED * deltaTime;
         float newY = rect.getY() + moveDirection.y * SPEED * deltaTime;
 
+        if (Sprint) {
+            newX = rect.getX() + moveDirection.x * SprintSpeed * deltaTime;
+            newY = rect.getY() + moveDirection.y * SprintSpeed * deltaTime;
+        }
         newX = MathUtils.clamp(newX, 0, gameViewport.getWorldWidth() - rect.getWidth());
         newY = MathUtils.clamp(newY, 0, gameViewport.getWorldHeight() - rect.getHeight());
 
@@ -90,7 +99,12 @@ public class Player extends GameObject {
         if(Gdx.input.isKeyPressed(Input.Keys.D)) {
             inputMovement.x += 1;
         }
-
+        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
+            Sprint = true;
+        }
+        if (!Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
+            Sprint = false;
+        }
         // inputMovement.nor(); // Normalise diagonal
         changeDirection(inputMovement);
     }
@@ -122,11 +136,14 @@ public class Player extends GameObject {
 
     private void updateAnimation() {
         if (moveDirection.isZero()) {
-            animationController.changeState( "idle_" + lastDirection, true );
+            animationController.changeState("idle_" + lastDirection, true);
         } else {
-            String direction = getDirectionName(); animationController.changeState( "walk_" + direction, true );
+            String direction = getDirectionName();
+            String prefix = Sprint ? "run_" : "walk_";
+            animationController.changeState(prefix + direction, true);
         }
     }
+
     public Rectangle getRect() {
         return rect;
     }
