@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -20,9 +21,16 @@ public class Player extends GameObject {
     private Vector2 inputMovement = new Vector2();
     private final PlayerAnimationController animationController;
     private String lastDirection = "s";
+    private static final float FRAME_SIZE = 64 * SCALE;
+    private static final float PAD_LEFT   = 26 * SCALE;
+    private static final float PAD_BOTTOM = 20 * SCALE;
 
-    public Player(float x, float y, Viewport gameViewport, Texture texture, Texture idleSheet, Texture walkSheet) {
-        super(x,y,64 * SCALE,64 * SCALE,idleSheet);
+    // Offset from rect's position to where the full frame should be drawn
+    private static final float DRAW_OFFSET_X = -PAD_LEFT;
+    private static final float DRAW_OFFSET_Y = -PAD_BOTTOM;
+
+    public Player(float x, float y, Viewport gameViewport, Texture idleSheet, Texture walkSheet) {
+        super(x, y, 12 * SCALE, 27 * SCALE, idleSheet);
         this.gameViewport = gameViewport;
         animationController = new PlayerAnimationController(0.1f);
         Animation<TextureRegion>[] idleAnimations = animationController.makeDirectionalAnimations( idleSheet, 64, 64 );
@@ -31,9 +39,9 @@ public class Player extends GameObject {
         String[] idleStates = { "idle_nw", "idle_w", "idle_sw", "idle_s", "idle_se", "idle_e", "idle_ne", "idle_n" };
         String[] walkStates = { "walk_nw", "walk_w", "walk_sw", "walk_s", "walk_se", "walk_e", "walk_ne", "walk_n" };
 
-        animationController.loadAnimations( idleStates, idleAnimations );
-        animationController.loadAnimations( walkStates, walkAnimations );
-        animationController.changeState( "idle_s", true );
+        animationController.loadAnimations(idleStates, idleAnimations);
+        animationController.loadAnimations(walkStates, walkAnimations);
+        animationController.changeState("idle_s", true );
     }
 
     @Override
@@ -47,7 +55,14 @@ public class Player extends GameObject {
     public void draw(Batch batch) {
         TextureRegion currentFrame = animationController.getCurrentFrame();
         if (currentFrame == null) { return; }
-        batch.draw(currentFrame, rect.x, rect.y, rect.width, rect.height);
+        // Draw the full frame, offset so it lines up around the tight rect
+        batch.draw(
+            currentFrame,
+            rect.x + DRAW_OFFSET_X,
+            rect.y + DRAW_OFFSET_Y,
+            FRAME_SIZE,
+            FRAME_SIZE
+        );
     }
 
     private void move(float deltaTime) {
@@ -65,22 +80,18 @@ public class Player extends GameObject {
         inputMovement.setZero();
         if(Gdx.input.isKeyPressed(Input.Keys.W)) {
             inputMovement.y += 1;
-            System.out.println("W");
         }
         if(Gdx.input.isKeyPressed(Input.Keys.A)) {
             inputMovement.x -= 1;
-            System.out.println("A");
         }
         if(Gdx.input.isKeyPressed(Input.Keys.S)) {
             inputMovement.y -= 1;
-            System.out.println("S");
         }
         if(Gdx.input.isKeyPressed(Input.Keys.D)) {
             inputMovement.x += 1;
-            System.out.println("D");
         }
 
-        // inputMovement.nor(); // Normalise diangle
+        // inputMovement.nor(); // Normalise diagonal
         changeDirection(inputMovement);
     }
 
@@ -115,5 +126,8 @@ public class Player extends GameObject {
         } else {
             String direction = getDirectionName(); animationController.changeState( "walk_" + direction, true );
         }
+    }
+    public Rectangle getRect() {
+        return rect;
     }
 }

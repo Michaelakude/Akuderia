@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.Color;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -17,11 +19,11 @@ public class GameScreen extends ScreenAdapter {
     private static final float WORLD_HEIGHT = 9f;
     private final Batch batch;
     private final Texture bgdTexture = new Texture(Gdx.files.internal("backgrounds/bgd.png"));
-    private final Texture playerTexture = new Texture(Gdx.files.internal("characters/Player/idle/player.png"));
     private final Viewport gameViewport = new ExtendViewport(16f, 9f);
     private final Texture playerWalkTexture = new Texture( Gdx.files.internal( "characters/Player/walk/Sprite/walk.png"));
     private final Texture playerIdleTexture = new Texture( Gdx.files.internal( "characters/Player/idle/Sprite/idle.png"));
-    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerTexture, playerIdleTexture, playerWalkTexture );
+    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerIdleTexture, playerWalkTexture );
+    private ShapeRenderer shapeRenderer = new ShapeRenderer();
 
     public GameScreen(GdxGame game) {
         this.batch = game.getBatch();
@@ -49,6 +51,7 @@ public class GameScreen extends ScreenAdapter {
         drawBackground();
         player.draw(batch);
         batch.end();
+        drawDebugBounds();
     }
     private void drawBackground() {
         // Calculate how many times the texture fits into the world dimensions
@@ -65,9 +68,22 @@ public class GameScreen extends ScreenAdapter {
         );
     }
 
+    private void drawDebugBounds() {
+        shapeRenderer.setProjectionMatrix(gameViewport.getCamera().combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+
+        // full sprite rect in yellow
+        shapeRenderer.setColor(Color.YELLOW);
+        Rectangle rect = player.getRect();
+        shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
+        shapeRenderer.end();
+    }
+
     @Override
     public void dispose() {
         bgdTexture.dispose();
-        playerTexture.dispose();
+        playerIdleTexture.dispose();
+        playerWalkTexture.dispose();
+        shapeRenderer.dispose();
     }
 }
