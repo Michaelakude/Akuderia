@@ -19,8 +19,9 @@ public class GameScreen extends ScreenAdapter {
     private final Texture bgdTexture = new Texture(Gdx.files.internal("backgrounds/bgd.png"));
     private final Texture playerTexture = new Texture(Gdx.files.internal("characters/Player/idle/player.png"));
     private final Viewport gameViewport = new ExtendViewport(16f, 9f);
-    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerTexture);
-
+    private final Texture playerWalkTexture = new Texture( Gdx.files.internal( "characters/Player/walk/Sprite/walk.png"));
+    private final Texture playerIdleTexture = new Texture( Gdx.files.internal( "characters/Player/idle/Sprite/idle.png"));
+    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerTexture, playerIdleTexture, playerWalkTexture );
 
     public GameScreen(GdxGame game) {
         this.batch = game.getBatch();
