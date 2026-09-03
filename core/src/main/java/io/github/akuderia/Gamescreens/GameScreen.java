@@ -13,8 +13,10 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.akuderia.Entities.Player;
+import com.badlogic.gdx.graphics.GL20;
 
 public class GameScreen extends ScreenAdapter {
+    private static final float SCALE = 1 / 32f;
     private static final float WORLD_WIDTH = 16f;
     private static final float WORLD_HEIGHT = 9f;
     private final Batch batch;
@@ -25,6 +27,7 @@ public class GameScreen extends ScreenAdapter {
     private final Texture playerRunTexture = new Texture( Gdx.files.internal( "characters/Player/run/Sprite/run.png"));
     private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
+    private ShapeRenderer shadow = new ShapeRenderer();
 
     public GameScreen(GdxGame game) {
         this.batch = game.getBatch();
@@ -47,9 +50,14 @@ public class GameScreen extends ScreenAdapter {
         player.updateLogic(deltaTime);
         ScreenUtils.clear(Color.GREEN);
         gameViewport.apply();
+
         batch.setProjectionMatrix(gameViewport.getCamera().combined);
         batch.begin();
         drawBackground();
+        batch.end();
+
+        drawShadow();
+        batch.begin();
         player.draw(batch);
         batch.end();
         drawDebugBounds();
@@ -80,11 +88,31 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.end();
     }
 
+    private void drawShadow() {
+        shadow.setProjectionMatrix(gameViewport.getCamera().combined);
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shadow.begin(ShapeRenderer.ShapeType.Filled);
+        shadow.setColor(0f, 0f, 0f, 0.35f); // semi-transparent black
+        Rectangle rect = player.getRect();
+        shadow.ellipse(
+            rect.x - (2 * SCALE), rect.y - (7 * SCALE),
+            18 * SCALE, 10 * SCALE,
+            32 // explicit segment count for a smooth curve
+        );
+        shadow.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+    }
+
     @Override
     public void dispose() {
         bgdTexture.dispose();
         playerIdleTexture.dispose();
         playerWalkTexture.dispose();
         shapeRenderer.dispose();
+        shadow.dispose();
     }
 }
