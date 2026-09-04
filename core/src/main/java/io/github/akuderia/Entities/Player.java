@@ -19,6 +19,7 @@ public class Player extends GameObject {
     private final Vector2 moveDirection = new Vector2();
     private static float SPEED = 2f;
     private static float SprintSpeed = SPEED * 1.8f;
+
     private Vector2 inputMovement = new Vector2();
     private final PlayerAnimationController animationController;
     private String lastDirection = "s";
@@ -29,15 +30,29 @@ public class Player extends GameObject {
     // Offset from rect's position to where the full frame should be drawn
     private static final float DRAW_OFFSET_X = -PAD_LEFT;
     private static final float DRAW_OFFSET_Y = -PAD_BOTTOM;
-    private boolean Sprint = false;
 
-    public Player(float x, float y, Viewport gameViewport, Texture idleSheet, Texture walkSheet, Texture runSheet) {
-        super(x, y, 12 * SCALE, 27 * SCALE, idleSheet);
+    private boolean isSprint = false;
+    private boolean isJump = false;
+    private boolean wasOnFloor = true;
+    private float verticalVelocity = 0f; // z-axis velocity for the hop
+
+    private static final float JUMP_HEIGHT = 1.3f;
+    private static final float JUMP_TIME_TO_PEAK = 0.4f;
+
+    private static final float JUMP_GRAVITY = (2f * JUMP_HEIGHT) / (JUMP_TIME_TO_PEAK * JUMP_TIME_TO_PEAK);
+    private static final float JUMP_VELOCITY = (2f * JUMP_HEIGHT) / JUMP_TIME_TO_PEAK;
+    private static final float FALL_GRAVITY_MULTIPLIER = 2f;
+    private static final float SHADOW_MIN_SCALE = 0.5f; // how small the shadow gets at the peak
+
+    public Player(float x, float y, float z, Viewport gameViewport, Texture idleSheet, Texture walkSheet, Texture runSheet) {
+        super(x, y, z, 12 * SCALE, 27 * SCALE, idleSheet);
         this.gameViewport = gameViewport;
         animationController = new PlayerAnimationController(0.1f);
         Animation<TextureRegion>[] idleAnimations = animationController.makeDirectionalAnimations( idleSheet, 64, 64 );
         Animation<TextureRegion>[] walkAnimations = animationController.makeDirectionalAnimations( walkSheet, 64, 64 );
         Animation<TextureRegion>[] runAnimations = animationController.makeDirectionalAnimations( runSheet, 64, 64 );
+
+        setGravity(JUMP_GRAVITY);
 
         String[] idleStates = { "idle_nw", "idle_w", "idle_sw", "idle_s", "idle_se", "idle_e", "idle_ne", "idle_n" };
         String[] walkStates = { "walk_nw", "walk_w", "walk_sw", "walk_s", "walk_se", "walk_e", "walk_ne", "walk_n" };
@@ -53,6 +68,7 @@ public class Player extends GameObject {
     public void update(float deltaTime) {
         animationController.update(deltaTime);
         move(deltaTime);
+        jump(deltaTime);
         updateAnimation();
     }
 
@@ -60,29 +76,60 @@ public class Player extends GameObject {
     public void draw(Batch batch) {
         TextureRegion currentFrame = animationController.getCurrentFrame();
         if (currentFrame == null) { return; }
-        // Draw the full frame, offset so it lines up around the tight rect
         batch.draw(
             currentFrame,
             rect.x + DRAW_OFFSET_X,
-            rect.y + DRAW_OFFSET_Y,
+            rect.y + DRAW_OFFSET_Y + z,
             FRAME_SIZE,
             FRAME_SIZE
         );
     }
 
     private void move(float deltaTime) {
-        if(moveDirection.isZero()) return;
-        float newX = rect.getX() + moveDirection.x * SPEED * deltaTime;
-        float newY = rect.getY() + moveDirection.y * SPEED * deltaTime;
-
-        if (Sprint) {
-            newX = rect.getX() + moveDirection.x * SprintSpeed * deltaTime;
-            newY = rect.getY() + moveDirection.y * SprintSpeed * deltaTime;
-        }
+        if (moveDirection.isZero()) return;
+        float speed = isSprint ? SprintSpeed : SPEED;
+        float newX = rect.getX() + moveDirection.x * speed * deltaTime;
+        float newY = rect.getY() + moveDirection.y * speed * deltaTime;
         newX = MathUtils.clamp(newX, 0, gameViewport.getWorldWidth() - rect.getWidth());
         newY = MathUtils.clamp(newY, 0, gameViewport.getWorldHeight() - rect.getHeight());
-
         rect.setPosition(newX, newY);
+    }
+
+    private boolean canJump() {
+        return wasOnFloor;
+    }
+
+    private void jump(float deltaTime) {
+        if (isJump) {
+            if (canJump()) {
+                verticalVelocity = JUMP_VELOCITY;
+                wasOnFloor = false;
+            }
+            isJump = false;
+        }
+
+        // Gravity only applies while airborne; grounded players just sit at z = 0.
+        if (!wasOnFloor) {
+            float g = getGravity();
+            if (verticalVelocity < 0) {
+                g *= FALL_GRAVITY_MULTIPLIER; // fall faster than we rose, purely for feel
+            }
+            verticalVelocity -= g * deltaTime;
+        }
+
+        // Terminal velocity clamp (falling speed cap)
+        if (verticalVelocity < -getVT()) {
+            verticalVelocity = -getVT();
+        }
+
+        z += verticalVelocity * deltaTime;
+
+        // Landing check
+        if (z <= 0f) {
+            z = 0f;
+            verticalVelocity = 0f;
+            wasOnFloor = true;
+        }
     }
 
     public void processInput() {
@@ -99,13 +146,17 @@ public class Player extends GameObject {
         if(Gdx.input.isKeyPressed(Input.Keys.D)) {
             inputMovement.x += 1;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-            Sprint = true;
+        if(Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
+            isSprint = true;
         }
-        if (!Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-            Sprint = false;
+        if(!Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
+            isSprint = false;
         }
-        // inputMovement.nor(); // Normalise diagonal
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            isJump = true;
+        }
+
+        inputMovement.nor(); // Normalise diagonal
         changeDirection(inputMovement);
     }
 
@@ -139,12 +190,31 @@ public class Player extends GameObject {
             animationController.changeState("idle_" + lastDirection, true);
         } else {
             String direction = getDirectionName();
-            String prefix = Sprint ? "run_" : "walk_";
+            String prefix = isSprint ? "run_" : "walk_";
             animationController.changeState(prefix + direction, true);
         }
     }
 
-    public Rectangle getRect() {
-        return rect;
+    public Rectangle getShadowBounds() {
+        // Shrink shadow as the player rises, based on how close z is to the jump's peak height.
+        // Clamped so it never goes below SHADOW_MIN_SCALE or above 1.
+        float heightRatio = MathUtils.clamp(z / JUMP_HEIGHT, 0f, 1f);
+        float scale = MathUtils.lerp(1f, SHADOW_MIN_SCALE, heightRatio);
+
+        float baseWidth = 18 * SCALE;
+        float baseHeight = 10 * SCALE;
+        float width = baseWidth * scale;
+        float height = baseHeight * scale;
+
+        float baseX = rect.x - (2 * SCALE);
+        float baseY = rect.y - (7 * SCALE);
+        float centerX = baseX + baseWidth / 2f;
+        float centerY = baseY + baseHeight / 2f;
+
+        return new Rectangle(
+            centerX - width / 2f,
+            centerY - height / 2f,
+            width, height
+        );
     }
 }

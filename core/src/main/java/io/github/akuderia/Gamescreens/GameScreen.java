@@ -25,7 +25,7 @@ public class GameScreen extends ScreenAdapter {
     private final Texture playerWalkTexture = new Texture( Gdx.files.internal( "characters/Player/walk/Sprite/walk.png"));
     private final Texture playerIdleTexture = new Texture( Gdx.files.internal( "characters/Player/idle/Sprite/idle.png"));
     private final Texture playerRunTexture = new Texture( Gdx.files.internal( "characters/Player/run/Sprite/run.png"));
-    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
+    private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, 0, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
     private ShapeRenderer shadow = new ShapeRenderer();
 
@@ -96,12 +96,8 @@ public class GameScreen extends ScreenAdapter {
 
         shadow.begin(ShapeRenderer.ShapeType.Filled);
         shadow.setColor(0f, 0f, 0f, 0.35f); // semi-transparent black
-        Rectangle rect = player.getRect();
-        shadow.ellipse(
-            rect.x - (2 * SCALE), rect.y - (7 * SCALE),
-            18 * SCALE, 10 * SCALE,
-            32 // explicit segment count for a smooth curve
-        );
+        Rectangle s = player.getShadowBounds();
+        shadow.ellipse(s.x, s.y, s.width, s.height, 32);
         shadow.end();
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
