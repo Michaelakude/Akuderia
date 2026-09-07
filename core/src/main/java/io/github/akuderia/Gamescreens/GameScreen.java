@@ -13,6 +13,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.akuderia.Entities.Player;
+import io.github.akuderia.WorldGen.CreateWorld;
+
 import com.badlogic.gdx.graphics.GL20;
 
 public class GameScreen extends ScreenAdapter {
@@ -21,13 +23,14 @@ public class GameScreen extends ScreenAdapter {
     private static final float WORLD_HEIGHT = 9f;
     private final Batch batch;
     private final Texture bgdTexture = new Texture(Gdx.files.internal("backgrounds/bgd.png"));
-    private final Viewport gameViewport = new ExtendViewport(16f, 9f);
+    private Viewport gameViewport = new ExtendViewport(16f, 9f);
     private final Texture playerWalkTexture = new Texture( Gdx.files.internal( "characters/Player/walk/Sprite/walk.png"));
     private final Texture playerIdleTexture = new Texture( Gdx.files.internal( "characters/Player/idle/Sprite/idle.png"));
     private final Texture playerRunTexture = new Texture( Gdx.files.internal( "characters/Player/run/Sprite/run.png"));
     private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, 0, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
     private ShapeRenderer shadow = new ShapeRenderer();
+    private final CreateWorld world = new CreateWorld(12345L);
 
     public GameScreen(GdxGame game) {
         this.batch = game.getBatch();
@@ -38,11 +41,17 @@ public class GameScreen extends ScreenAdapter {
     public void resize(int width, int height) {
         gameViewport.update(width, height, true);
     }
+
     @Override
 	public void show () {
         super.show();
+        world.create();
 	}
 
+    public void updateCamera(Player player) {
+        gameViewport.getCamera().position.set(player.getRect().x, player.getRect().y, 0);
+        gameViewport.getCamera().update();
+    }
 
     @Override
     public void render(float deltaTime) {
@@ -50,10 +59,11 @@ public class GameScreen extends ScreenAdapter {
         player.updateLogic(deltaTime);
         ScreenUtils.clear(Color.GREEN);
         gameViewport.apply();
+        this.updateCamera(player);
 
         batch.setProjectionMatrix(gameViewport.getCamera().combined);
         batch.begin();
-        drawBackground();
+        drawWorld();
         batch.end();
 
         drawShadow();
@@ -62,6 +72,15 @@ public class GameScreen extends ScreenAdapter {
         batch.end();
         drawDebugBounds();
     }
+
+    private void drawWorld() {
+        batch.draw(world.getWorldTexture(),
+            0, 0,
+            gameViewport.getWorldWidth() + 30,
+            gameViewport.getWorldHeight() + 30
+        );
+    }
+
     private void drawBackground() {
         // Calculate how many times the texture fits into the world dimensions
         float u2 = gameViewport.getWorldWidth() / WORLD_WIDTH;
