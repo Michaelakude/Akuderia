@@ -33,10 +33,12 @@ public class CreateWorld {
     private Texture worldTexture;
 
     public CreateWorld(long seed) {
-        this.worldSize = 512;
+        this.worldSize = 4096;
         this.seed = seed;
     }
-
+    public int getWorldMid() {
+        return worldSize/2;
+    }
     // Runs the full generation pipeline: noise -> classify -> build debug texture.
     public void create() {
         heightMap = new Grid(worldSize);
@@ -98,7 +100,7 @@ public class CreateWorld {
         if (value < 0.60f)
             return TerrainType.GRASS;
 
-        if (value < 0.70f)
+        if (value < 0.80f)
             return TerrainType.HILL;
 
         if (value < 0.90f)

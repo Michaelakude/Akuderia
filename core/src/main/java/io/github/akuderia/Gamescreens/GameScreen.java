@@ -14,6 +14,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.akuderia.Entities.Player;
 import io.github.akuderia.WorldGen.CreateWorld;
+import io.github.akuderia.WorldGen.WorldRenderer;
 
 import com.badlogic.gdx.graphics.GL20;
 
@@ -31,6 +32,8 @@ public class GameScreen extends ScreenAdapter {
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
     private ShapeRenderer shadow = new ShapeRenderer();
     private final CreateWorld world = new CreateWorld(12345L);
+    // private final Player player = new Player(world.getWorldMid()/2f, world.getWorldMid()/2f, 0, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
+
 
     public GameScreen(GdxGame game) {
         this.batch = game.getBatch();
@@ -76,8 +79,8 @@ public class GameScreen extends ScreenAdapter {
     private void drawWorld() {
         batch.draw(world.getWorldTexture(),
             0, 0,
-            gameViewport.getWorldWidth() + 30,
-            gameViewport.getWorldHeight() + 30
+            gameViewport.getWorldWidth() + 50f,
+            gameViewport.getWorldHeight() + 50f
         );
     }
 
