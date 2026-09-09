@@ -7,22 +7,22 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.akuderia.Entities.Player;
-import io.github.akuderia.WorldGen.CreateWorld;
+import io.github.akuderia.WorldGen.WorldTileGenerator;
 
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 
 public class GameScreen extends ScreenAdapter {
-    private static final float SCALE = 1 / 32f;
     private static final float WORLD_WIDTH = 16f;
     private static final float WORLD_HEIGHT = 9f;
     private final Batch batch;
-    private final Texture bgdTexture = new Texture(Gdx.files.internal("backgrounds/bgd.png"));
     private Viewport gameViewport = new ExtendViewport(16f, 9f);
     private final Texture playerWalkTexture = new Texture( Gdx.files.internal( "characters/Player/walk/Sprite/walk.png"));
     private final Texture playerIdleTexture = new Texture( Gdx.files.internal( "characters/Player/idle/Sprite/idle.png"));
@@ -30,11 +30,11 @@ public class GameScreen extends ScreenAdapter {
     private final Player player = new Player(WORLD_WIDTH/2f, WORLD_HEIGHT/2f, 0, gameViewport, playerIdleTexture, playerWalkTexture, playerRunTexture);
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
     private ShapeRenderer shadow = new ShapeRenderer();
-    private final CreateWorld world = new CreateWorld(12345L);
+    private final WorldTileGenerator world = new WorldTileGenerator(12345L);
+    private OrthogonalTiledMapRenderer orthogonalTiledMapRenderer;
 
     public GameScreen(GdxGame game) {
         this.batch = game.getBatch();
-        bgdTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
 	public void show () {
         super.show();
-        world.create();
+        orthogonalTiledMapRenderer = world.generate();
 	}
 
     public void updateCamera(Player player) {
@@ -62,38 +62,14 @@ public class GameScreen extends ScreenAdapter {
         this.updateCamera(player);
 
         batch.setProjectionMatrix(gameViewport.getCamera().combined);
-        batch.begin();
-        drawWorld();
-        batch.end();
+        orthogonalTiledMapRenderer.setView((OrthographicCamera) gameViewport.getCamera());
+        orthogonalTiledMapRenderer.render();
 
         drawShadow();
         batch.begin();
         player.draw(batch);
         batch.end();
         drawDebugBounds();
-    }
-
-    private void drawWorld() {
-        batch.draw(world.getWorldTexture(),
-            0, 0,
-            gameViewport.getWorldWidth() + 30,
-            gameViewport.getWorldHeight() + 30
-        );
-    }
-
-    private void drawBackground() {
-        // Calculate how many times the texture fits into the world dimensions
-        float u2 = gameViewport.getWorldWidth() / WORLD_WIDTH;
-        float v2 = gameViewport.getWorldHeight() / WORLD_HEIGHT;
-
-        // Draw with custom UV coordinates to correctly repeat the texture
-        batch.draw(bgdTexture,
-            0, 0,
-            gameViewport.getWorldWidth(),
-            gameViewport.getWorldHeight(),
-            0, 0,
-            u2, v2
-        );
     }
 
     private void drawDebugBounds() {
@@ -124,9 +100,9 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
-        bgdTexture.dispose();
         playerIdleTexture.dispose();
         playerWalkTexture.dispose();
+        playerRunTexture.dispose();
         shapeRenderer.dispose();
         shadow.dispose();
     }

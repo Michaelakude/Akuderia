@@ -2,10 +2,12 @@ package io.github.akuderia.WorldGen;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.github.czyzby.noise4j.map.Grid;
 import com.github.czyzby.noise4j.map.generator.noise.NoiseGenerator;
+import com.badlogic.gdx.Gdx;
 
 public class CreateWorld {
 
@@ -17,7 +19,7 @@ public class CreateWorld {
         PEAK
     }
 
-    private final int worldSize;
+    public final int worldSize;
 
     // The base seed for this world. Every noise octave derives its own seed from this,
     // so the same seed value always regenerates the exact same terrain.
@@ -71,6 +73,7 @@ public class CreateWorld {
 
         // Upload the finished pixmap to the GPU as a texture, then free the CPU-side pixmap
         worldTexture = new Texture(pixmap);
+        PixmapIO.writePNG(Gdx.files.local("WorldDebug.png"), pixmap);
         pixmap.dispose();
     }
 

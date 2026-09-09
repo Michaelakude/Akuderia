@@ -90,8 +90,6 @@ public class Player extends GameObject {
         float speed = isSprint ? SprintSpeed : SPEED;
         float newX = rect.getX() + moveDirection.x * speed * deltaTime;
         float newY = rect.getY() + moveDirection.y * speed * deltaTime;
-        newX = MathUtils.clamp(newX, 0, gameViewport.getWorldWidth() - rect.getWidth());
-        newY = MathUtils.clamp(newY, 0, gameViewport.getWorldHeight() - rect.getHeight());
         rect.setPosition(newX, newY);
     }
 
